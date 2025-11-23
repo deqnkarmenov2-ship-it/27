@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BG РЕСТО</title>
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+    
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#158062">
+    <meta name="application-name" content="BG РЕСТО">
+
+    <style>
+        /* ОСНОВНИ ПРОМЕНИ ЗА ЦЯЛ ЕКРАН */
+        html, body {
+            height: 100%; 
+            margin: 0;
+            overflow: hidden; 
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f2f2f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-container {
+            background-color: white;
+            width: 100%;
+            max-width: 375px;
+            height: 100%; 
+            border-radius: 0; 
+            box-shadow: none; 
+            display: flex;
+            flex-direction: column;
+            position: relative; 
+        }
+
+        .content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1; 
+            overflow-y: auto; 
+            transition: opacity 0.3s;
+        }
+
+        /* СТИЛ ЗА ГЛАВНАТА ИНСТРУКЦИЯ */
+        .instruction {
+            font-size: 24px; 
+            font-weight: bold;
+            color: black; 
+            text-align: center;
+            margin-bottom: 25px; 
+            padding-top: 15px; 
+        }
+        
+        /* НОВ СТИЛ ЗА ЗАКЛЮЧВАНЕ НА ЦЯЛОТО ПРИЛОЖЕНИЕ */
+        .full-lock-overlay {
+            position: absolute;
+            top: 0; 
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.98);
+            z-index: 990; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .full-lock-overlay .lock-content {
+            background-color: #f2f2f7;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- НОВ СТИЛ ЗА КЛИКАЕМИЯ ТЕКСТ С КОД --- */
+        .code-link {
+            text-decoration: none; 
+            color: inherit; 
+            display: block;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        /* Останалите стилове за инпути и бутони */
+        .cash-section {
+            width: 100%;
+            border-top: 1px solid #e0e0e0;
+            margin-top: 15px; 
+            padding-top: 10px;
+            flex-shrink: 0;
+        }
+        
+        .cash-section h3 {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #158062;
+            text-align: center;
+        }
+        
+        .cash-section label {
+            display: block; 
+            text-align: left; 
+            font-size: 14px; 
+            margin-bottom: 5px; 
+            color: #555;
+            padding-left: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px; 
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+            color: #333;
+            outline: none;
+            flex-shrink: 0;
+        }
+
+        input:focus {
+            border-color: #158062;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Стил за червения плейсхолдър/въведен текст */
+        #unlockKey::placeholder { 
+            color: #d93025 !important;
+            opacity: 1; 
+        }
+        #unlockKey {
+            color: #d93025 !important;
+            font-weight: bold;
+        }
+        
+        /* --- НОВИ СТИЛОВЕ ЗА ПОДРАВНЯВАНЕ НА БУТОНИТЕ В ЗАКЛЮЧЕНИЯ ЕКРАН --- */
+        
+        .btn-calc, .btn-calc-pink, .btn-reset { 
+            background-color: #158062; 
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 15px; 
+            box-sizing: border-box; /* Гарантира, че padding-ът не добавя ширина */
+            flex-shrink: 0;
+        }
+
+        .btn-calc:active, .btn-calc-pink:active {
+            background-color: #0f5f49;
+        }
+        
+        /* Червен бутон за Отключване/Купи */
+        .btn-unlock-buy {
+            background-color: #d93025 !important; 
+            color: white;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 15px; /* Увеличено, за да отговаря на вътрешния маргин на lock-content */
+            margin-bottom: 0; /* Премахва долния маргин */
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            box-sizing: border-box; /* Гарантира, че padding-ът не добавя ширина */
+        }
+        
+        /* КОРЕКЦИЯ: ИЗПОЛЗВАМЕ ТОЗИ СТИЛ, ЗА ДА ПОДРАВНИМ БУТОНА ЗА ПОТВЪРЖДЕНИЕ КЪМ БУТОНА ЗА ОТКЛЮЧВАНЕ */
+        .lock-content .btn-calc {
+            margin-top: 10px; /* Запазва горното разстояние */
+            margin-bottom: 0; /* Премахва долния маргин, за да го подравни с .btn-unlock-buy */
+        }
+        
+        .btn-unlock-buy:active {
+            background-color: #a8241d !important;
+        }
+        
+        /* НОВ СТИЛ ЗА МАЛКО ИНФО */
+        .small-info {
+            font-size: 12px;
+            color: #555;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .results {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 500;
+            color: #000;
+            flex-shrink: 0;
+        }
+
+        .results p {
+            margin: 5px 0; 
+            font-size: 20px; 
+            font-weight: bold;
+        }
+        
+        .results .total-bill {
+            font-size: 14px; 
+            margin-top: 10px; 
+            color: #555;
+            font-weight: normal;
+        }
+        
+        .results .warning {
+            color: orange;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .btn-reset {
+            background-color: #d93025; 
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 5px; 
+            margin-bottom: 20px; 
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+
+        .btn-reset:active {
+            background-color: #a8241d;
+        }
+        
+        /* ----------------------------------------------------- */
+        /* СТИЛОВЕ ЗА ИНСТАЛАЦИОННИЯ ПРОЗОРЕЦ (PWA Prompt) */
+        /* ----------------------------------------------------- */
+        .install-prompt-modal {
+            position: fixed;
+            top: 0; 
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 15px 20px;
+            box-sizing: border-box;
+            color: white;
+            text-align: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .prompt-content p {
+            margin: 0 0 10px 0;
+            font-size: 17px;
+            font-weight: bold;
+        }
+        
+        .prompt-content button {
+            width: 48%; 
+            margin: 5px 1% 0;
+            display: inline-block;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body onload="loadCashLimits(); checkProStatus();">
+
+    <div class="app-container">
+        
+        <div class="content" id="lockedContent">
+            <div class="instruction">
+                Въведи сметката и сумата,<br> с която е платено
+            </div>
+            
+            <input type="number" id="billEur" placeholder="Сметка в евро" step="0.01" inputmode="decimal">
+
+            <input type="number" id="paidEur" placeholder="Платено в евро" step="0.01" inputmode="decimal">
+            <input type="number" id="paidBgn" placeholder="Платено в лв" step="0.01" inputmode="decimal">
+
+            <button class="btn-calc" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
+
+            <div class="results">
+                <p>Връщаш €: <span id="resEur">0.00</span></p>
+                <p>Връщаш лв: <span id="resBgn">0.00</span></p>
+                <p class="total-bill">Обща сметка: <span id="totalBillDisplay">0.00</span> лв</p>
+                <p class="warning" id="cashWarning"></p>
+            </div>
+            
+            <div class="cash-section">
+                <h3>Наличност в евро (за оптимизация)</h3>
+                
+                <label for="cashEur">Наличност в евро (€):</label>
+                <input type="number" id="cashEur" placeholder="Въведи 0, ако нямаш евро" step="0.01" inputmode="decimal" oninput="saveCashLimit()">
+            </div>
+            
+            <button class="btn-calc-pink" onclick="calculateResto()">ИЗЧИСЛИ РЕСТО</button>
+
+            <button class="btn-reset" onclick="resetFields()">НУЛИРАНЕ</button>
+        </div>
+        
+        <div class="full-lock-overlay" id="fullLockOverlay" style="display:none;">
+            <div class="lock-content">
+                <p style="font-size: 20px; font-weight: bold; color: #158062;">ПРИЛОЖЕНИЕТО Е ЗАКЛЮЧЕНО</p>
+                
+                <a href="https://www.mobile.bg/obiava-21751539183691629-mercedes-benz-g-500-top" target="_blank" class="code-link">
+                    Необходим е <span style='color: #d93025; font-weight: bold;'>КОД</span> за достъп до калкулатора.
+                </a>
+                
+                <p style="font-size: 14px; margin: 15px 0 5px 0;">Въведи код за отключване:</p> 
+                
+                <input type="text" id="unlockKey" placeholder="ВЪВЕДЕТЕ ВАШИЯ КОД ТУК" style="margin-bottom: 10px;"/> 
+                <button class="btn-calc" onclick="unlockFeature()">ПОТВЪРДИ КЛЮЧ</button>
+
+                <a href="https://www.mobile.bg/obiava-21751539183691629-mercedes-benz-g-500-top" class="btn-unlock-buy" target="_blank">
+                    ОТКЛЮЧИ ПРИЛОЖЕНИЕТО
+                </a>
+                
+                <p class="small-info">
+                    Натисни ОТКЛЮЧИ, за да получиш кода си.
+                </p>
+            </div>
+        </div>
+        </div>
+    
+    <div id="installPrompt" class="install-prompt-modal" style="display: none;">
+        <div class="prompt-content">
+            <p>Инсталирай приложението на телефона си за бърз достъп!</p>
+            <button id="installButton" class="btn-calc">Инсталирай</button>
+            <button id="dismissButton" class="btn-reset">Затвори</button>
+        </div>
+    </div>
+    <script>
+        const EURO_RATE = 1.95583;
+        // ⚠️ ТОВА Е ТЕСТОВИЯТ КЛЮЧ, КОЙТО СКОРО ЩЕ ЗАМЕНИМ С APP SCRIPT
+        const SECRET_KEY = "TESTKEY12345"; 
+        const LS_PRO_KEY = 'isProUnlocked'; 
+        
+        let deferredPrompt; 
+        const installPrompt = document.getElementById('installPrompt');
+        const installButton = document.getElementById('installButton');
+        const dismissButton = document.getElementById('dismissButton');
+        
+        const LS_INSTALLED_STATUS = 'pwa_installed'; 
+
+        // -----------------------------------------------------
+        // PWA - ЛОГИКА ЗА ОФЛАЙН И ИНСТАЛАЦИЯ
+        // -----------------------------------------------------
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // 1. Регистрация на Service Worker
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker регистрацията е успешна!');
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker регистрацията се провали:', error);
+                    });
+            });
+            
+            // 2. Прихващане на събитието, което позволява инсталация
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+
+                // Проверка дали вече е инсталирано (ако е, не прави нищо)
+                const isInstalled = localStorage.getItem(LS_INSTALLED_STATUS) === 'true' || window.matchMedia('(display-mode: standalone)').matches;
+                
+                if (isInstalled) {
+                    return;
+                }
+
+                // Показване на нашия custom прозорец
+                installPrompt.style.display = 'block';
+                
+                // Автоматично скриване след 15 секунди
+                setTimeout(() => {
+                    installPrompt.style.display = 'none';
+                }, 15000); 
+            });
+            
+            // 3. Обработка след успешна инсталация
+            window.addEventListener('appinstalled', () => {
+                installPrompt.style.display = 'none';
+                // ⬇️ МАРКИРАНЕ КАТО ИНСТАЛИРАНО
+                localStorage.setItem(LS_INSTALLED_STATUS, 'true');
+                deferredPrompt = null;
+            });
+        }
+        
+        // 4. Клик на бутона "Инсталирай"
+        installButton.addEventListener('click', () => {
+            if (deferredPrompt) {
+                installPrompt.style.display = 'none';
+                deferredPrompt.prompt();
+                
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        localStorage.setItem(LS_INSTALLED_STATUS, 'true');
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        });
+        
+        // 5. Клик на бутона "Затвори"
+        dismissButton.addEventListener('click', () => {
+            installPrompt.style.display = 'none';
+        });
+
+        
+        // -----------------------------------------------------
+        // ПОМОЩНИ ФУНКЦИИ
+        // -----------------------------------------------------
+        function roundMoney(amount) {
+            return Math.round((amount + Number.EPSILON) * 100) / 100;
+        }
+
+        // -----------------------------------------------------
+        // ЛОГИКА ЗА ОТКЛЮЧВАНЕ
+        // -----------------------------------------------------
+        function checkProStatus() {
+            const isUnlocked = localStorage.getItem(LS_PRO_KEY) === 'true';
+            
+            const fullLockOverlay = document.getElementById('fullLockOverlay');
+            const lockedContent = document.getElementById('lockedContent'); 
+
+            if (isUnlocked) {
+                fullLockOverlay.style.display = 'none';
+                lockedContent.style.opacity = '1';
+                lockedContent.style.pointerEvents = 'auto'; // Активира кликането
+            } else {
+                // ПРИНУДИТЕЛНО СКРИВАНЕ
+                fullLockOverlay.style.display = 'flex';
+                lockedContent.style.opacity = '0'; // Сменено от 0.1 на 0
+                lockedContent.style.pointerEvents = 'none'; // Забранява кликането
+            }
+        }
+        
+        function unlockFeature() {
+            const enteredKey = document.getElementById('unlockKey').value.trim(); 
+            
+            if (enteredKey === SECRET_KEY) { 
+                
+                localStorage.setItem(LS_PRO_KEY, 'true');
+                
+                alert(`Успех! Приложението е отключено!`);
+                
+                document.getElementById('unlockKey').value = ''; 
+                checkProStatus(); // Обновява статуса на заключване
+            } else {
+                alert("Грешен ключ. Моля, проверете кода.");
+                document.getElementById('unlockKey').value = '';
+            }
+        }
+        
+        // -----------------------------------------------------
+        // ФУНКЦИИ ЗА ЗАПАЗВАНЕ НА НАЛИЧНОСТТА
+        // -----------------------------------------------------
+        function saveCashLimit() {
+            const isUnlocked = localStorage.getItem(LS_PRO_KEY) === 'true';
+            
+            if (isUnlocked) {
+                localStorage.setItem('resto_cashEur', document.getElementById('cashEur').value);
+            }
+        }
+
+        function loadCashLimits() {
+            const savedCashEur = localStorage.getItem('resto_cashEur');
+            if (savedCashEur !== null) {
+                document.getElementById('cashEur').value = savedCashEur;
+            } else {
+                document.getElementById('cashEur').value = '';
+            }
+        }
+        
+        // -----------------------------------------------------
+        // АЛГОРИТЪМ ЗА ИЗЧИСЛЯВАНЕ НА РЕСТОТО
+        // -----------------------------------------------------
+
+        function calculateResto() {
+            const isProActive = localStorage.getItem(LS_PRO_KEY) === 'true';
+
+            if (!isProActive) {
+                alert("Приложението е заключено. Моля, въведете ключ за достъп.");
+                return; 
+            }
+            
+            let billEurInput = parseFloat(document.getElementById('billEur').value) || 0;
+            let paidEur = parseFloat(document.getElementById('paidEur').value) || 0;
+            let paidBgn = parseFloat(document.getElementById('paidBgn').value) || 0;
+            
+            let cashEurValue = document.getElementById('cashEur').value;
+            let cashEurAvailable = cashEurValue === '' ? Infinity : parseFloat(cashEurValue);
+
+            let totalBillInLeva = (billEurInput * EURO_RATE);
+            let totalPaidInLeva = (paidEur * EURO_RATE) + paidBgn;
+            let rawChangeLeva = totalPaidInLeva - totalBillInLeva;
+            
+            document.getElementById('totalBillDisplay').innerText = roundMoney(totalBillInLeva).toFixed(2);
+            document.getElementById('cashWarning').innerText = ''; 
+            document.querySelector('.results').style.color = "black";
+
+            if (rawChangeLeva < -0.009) {
+                document.getElementById('resEur').innerText = "Недостиг!";
+                document.getElementById('resBgn').innerText = roundMoney(Math.abs(rawChangeLeva)).toFixed(2) + " лв";
+                document.querySelector('.results').style.color = "#d93025"; 
+                return;
+            }
+            if (rawChangeLeva < 0.009) {
+                 document.getElementById('resEur').innerText = "0.00";
+                 document.getElementById('resBgn').innerText = "0.00";
+                 return;
+            }
+
+            let totalChangeLeva = roundMoney(rawChangeLeva); 
+            let finalEurToReturn = 0;
+            let finalBgnToReturn = 0;
+            
+            let totalChangeEurDesired = roundMoney(totalChangeLeva / EURO_RATE); 
+            
+            
+            if (totalChangeEurDesired <= cashEurAvailable) {
+                finalEurToReturn = totalChangeEurDesired;
+                finalBgnToReturn = 0;
+                
+            } else {
+                finalEurToReturn = cashEurAvailable; 
+
+                let eurInLevaReturned = finalEurToReturn * EURO_RATE;
+                let remainingChangeInLeva = totalChangeLeva - eurInLevaReturned;
+                
+                finalBgnToReturn = roundMoney(remainingChangeInLeva);
+
+                if (cashEurAvailable !== Infinity) {
+                    document.getElementById('cashWarning').innerText = `ВНИМАНИЕ: Недостатъчно евро. Връщаш ${finalEurToReturn.toFixed(2)}€ и остатъка (${finalBgnToReturn.toFixed(2)} лв.) в лева.`;
+                    document.querySelector('.results').style.color = "orange";
+                }
+            }
+            
+            document.getElementById('resEur').innerText = finalEurToReturn.toFixed(2);
+            document.getElementById('resBgn').innerText = finalBgnToReturn.toFixed(2);
+        }
+
+        // -----------------------------------------------------
+        // ФУНКЦИЯ ЗА ПЪЛНО НУЛИРАНЕ
+        // -----------------------------------------------------
+        function resetFields() {
+            const isProActive = localStorage.getItem(LS_PRO_KEY) === 'true';
+
+            if (!isProActive) {
+                alert("Приложението е заключено. Моля, въведете ключ за достъп.");
+                return; 
+            }
+            
+            document.getElementById('billEur').value = '';
+            document.getElementById('paidEur').value = '';
+            document.getElementById('paidBgn').value = '';
+            
+            document.getElementById('resEur').innerText = '0.00';
+            document.getElementById('resBgn').innerText = '0.00';
+            document.getElementById('totalBillDisplay').innerText = '0.00';
+            document.getElementById('cashWarning').innerText = ''; 
+            document.querySelector('.results').style.color = "black";
+
+            document.getElementById('cashEur').value = '';
+            localStorage.removeItem('resto_cashEur');
+        }
+    </script>
+</body>
+</html>
